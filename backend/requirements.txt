@@ -1,0 +1,9 @@
+fastapi==0.115.0
+caldav==1.5.0
+uvicorn[standard]==0.30.6
+
+python-keyring==25.4.1
+aiosqlite==0.20.0
+pydantic==2.9.2
+apscheduler==3.10.4
+python-dateutil==2.9.0
