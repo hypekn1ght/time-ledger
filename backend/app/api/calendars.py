@@ -47,6 +47,7 @@ async def add_calendar(req: ConnectionRequest, background_tasks: BackgroundTasks
     
     # Save calendars to DB with default tier
     async with aiosqlite.connect(DATABASE_PATH) as db:
+        db.row_factory = aiosqlite.Row
         saved_calendars = []
         for cal in calendar_data:
             # Check if already exists
