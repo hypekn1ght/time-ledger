@@ -1,0 +1,17 @@
+# render.yaml - Time Ledger Backend
+# Docs: https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: time-ledger-backend
+    runtime: python
+    plan: free
+    repo: https://github.com/hypekn1ght/time-ledger
+    branch: master
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12"
