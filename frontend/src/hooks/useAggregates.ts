@@ -1,10 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../api';
 
-export function useWeeklyAggregate() {
+export function useWeeklyAggregate(weekOffset = 0) {
   return useQuery({
-    queryKey: ['weekly'],
-    queryFn: api.getThisWeek,
+    queryKey: ['weekly', weekOffset],
+    queryFn: () => weekOffset === 0 ? api.getThisWeek() : api.getWeeklyOffset(weekOffset),
     refetchInterval: 1000 * 60, // Refresh every minute
   });
 }

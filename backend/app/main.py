@@ -26,10 +26,19 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS for local frontend
+# CORS for local frontend and Vercel frontend URLs
+# TODO: When backend public URL is confirmed, update this list to include it.
+# Current Vercel frontend: https://frontend-zeta-eight-35.vercel.app
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "https://time-ledger.vercel.app"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "https://frontend-zeta-eight-35.vercel.app",
+        "https://frontend-cj98khh4q-hypekn1ghts-projects.vercel.app",
+        "https://frontend-gyuvrlv7j-hypekn1ghts-projects.vercel.app",
+        "https://frontend-obo5x20xs-hypekn1ghts-projects.vercel.app",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

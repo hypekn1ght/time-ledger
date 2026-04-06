@@ -1,10 +1,16 @@
+import { useState } from 'react';
 import { useWeeklyAggregate } from '../hooks/useAggregates';
 import { TIER_COLORS, ALL_TIERS } from '../types';
 import WeeklyChart from './WeeklyChart';
 
 
 export default function Dashboard() {
-  const { data: week, isLoading, error } = useWeeklyAggregate();
+  const [weekOffset, setWeekOffset] = useState(0);
+  const { data: week, isLoading, error } = useWeeklyAggregate(weekOffset);
+
+  const handlePrevWeek = () => setWeekOffset(prev => prev - 1);
+  const handleNextWeek = () => setWeekOffset(prev => prev + 1);
+  const handleCurrentWeek = () => setWeekOffset(0);
 
   if (isLoading) {
     return (
@@ -86,16 +92,45 @@ export default function Dashboard() {
       <div className="bg-surface border border-border rounded-lg p-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="font-semibold text-lg">Weekly Breakdown</h2>
-          <div className="flex gap-4 text-xs">
-            {ALL_TIERS.map((tier) => (
-              <div key={tier} className="flex items-center gap-1.5">
-                <div 
-                  className="w-2 h-2 rounded-full"
-                  style={{ backgroundColor: TIER_COLORS[tier] }}
-                />
-                <span className="text-text-secondary">{tier}</span>
-              </div>
-            ))}
+          <div className="flex items-center gap-3">
+            <div className="flex gap-4 text-xs mr-4">
+              {ALL_TIERS.map((tier) => (
+                <div key={tier} className="flex items-center gap-1.5">
+                  <div 
+                    className="w-2 h-2 rounded-full"
+                    style={{ backgroundColor: TIER_COLORS[tier] }}
+                  />
+                  <span className="text-text-secondary">{tier}</span>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={handlePrevWeek}
+              className="px-3 py-1.5 text-sm border border-border rounded hover:bg-bg transition-colors"
+              title="Previous week"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            {weekOffset !== 0 && (
+              <button
+                onClick={handleCurrentWeek}
+                className="px-3 py-1.5 text-sm bg-blue text-white rounded hover:bg-blue/90 transition-colors"
+              >
+                Current Week
+              </button>
+            )}
+            <button
+              onClick={handleNextWeek}
+              disabled={weekOffset >= 0}
+              className="px-3 py-1.5 text-sm border border-border rounded hover:bg-bg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              title="Next week"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
           </div>
         </div>
         <WeeklyChart dailyBreakdown={week.daily_breakdown} />
