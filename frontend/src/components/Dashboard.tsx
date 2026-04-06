@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useWeeklyAggregate } from '../hooks/useAggregates';
+import { useWeeklyAggregate, useSyncStatus, useCalendars } from '../hooks';
 import { TIER_COLORS, ALL_TIERS } from '../types';
 import WeeklyChart from './WeeklyChart';
 
@@ -7,10 +7,19 @@ import WeeklyChart from './WeeklyChart';
 export default function Dashboard() {
   const [weekOffset, setWeekOffset] = useState(0);
   const { data: week, isLoading, error } = useWeeklyAggregate(weekOffset);
+  const { data: syncStatus } = useSyncStatus();
+  const { data: calendars = [] } = useCalendars();
 
   const handlePrevWeek = () => setWeekOffset(prev => prev - 1);
   const handleNextWeek = () => setWeekOffset(prev => prev + 1);
   const handleCurrentWeek = () => setWeekOffset(0);
+
+  // Determine why there's no data
+  const hasCalendars = calendars.length > 0;
+  const hasSyncError = !!syncStatus?.last_error;
+  const eventsSynced = syncStatus?.events_synced ?? 0;
+  const isSyncing = syncStatus?.is_syncing;
+  const lastSync = syncStatus?.last_sync;
 
   if (isLoading) {
     return (
@@ -39,7 +48,25 @@ export default function Dashboard() {
           </svg>
         </div>
         <h2 className="text-xl font-semibold mb-2">No data yet</h2>
-        <p className="text-text-secondary">Connect your calendars in Settings to start tracking your time.</p>
+        {!hasCalendars ? (
+          <p className="text-text-secondary">Connect your calendars in Settings to start tracking your time.</p>
+        ) : hasSyncError ? (
+          <div className="inline-block text-left">
+            <p className="text-danger/80">Sync error: {syncStatus.last_error}</p>
+            <p className="text-text-secondary text-sm mt-1">Go to Settings and try re-connecting your Apple ID.</p>
+          </div>
+        ) : isSyncing ? (
+          <p className="text-text-secondary">Syncing your calendars...</p>
+        ) : (
+          <div className="inline-block text-left">
+            <p className="text-text-secondary">Calendars connected but no events loaded.</p>
+            {eventsSynced === 0 && lastSync ? (
+              <p className="text-text-secondary text-sm mt-1">Sync completed but found 0 events — try re-connecting your Apple ID in Settings.</p>
+            ) : (
+              <p className="text-text-secondary text-sm mt-1">Trigger a manual sync in Settings to load your data.</p>
+            )}
+          </div>
+        )}
       </div>
     );
   }
