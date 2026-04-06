@@ -8,9 +8,18 @@ import logging
 logger = logging.getLogger(__name__)
 
 def get_credentials(caldav_url: str) -> tuple[str, str]:
-    """Retrieve stored credentials from keyring."""
-    apple_id = keyring.get_password("timeledger_caldav", f"{caldav_url}_apple_id")
-    apple_password = keyring.get_password("timeledger_caldav", f"{caldav_url}_apple_password")
+    """Retrieve stored credentials from keyring.
+    
+    Credentials are stored under the root iCloud CalDAV URL (https://caldav.icloud.com/),
+    not the calendar-specific URL, since one Apple ID credentials apply to all calendars.
+    """
+    # Normalize to root iCloud URL for credential lookup
+    if "icloud.com" in caldav_url:
+        root_url = "https://caldav.icloud.com/"
+    else:
+        root_url = caldav_url
+    apple_id = keyring.get_password("timeledger_caldav", f"{root_url}_apple_id")
+    apple_password = keyring.get_password("timeledger_caldav", f"{root_url}_apple_password")
     return apple_id, apple_password
 
 def store_credentials(caldav_url: str, apple_id: str, apple_password: str):
@@ -97,23 +106,35 @@ def fetch_events(caldav_url: str, calendar_id: str, apple_id: str, apple_passwor
         events = []
         for event in results:
             try:
-                if hasattr(event, 'vobject_item') and event.vobject_item:
-                    vevent = event.vobject_item.vevent
-                    summary = str(vevent.summary.value) if vevent.summary else "No title"
-                    start = vevent.dtstart.value
-                    end = vevent.dtend.value if vevent.dtend else start + timedelta(hours=1)
-                    
-                    # Handle all-day events
-                    if hasattr(start, 'date') and not hasattr(start, 'hour'):
-                        start = datetime.combine(start.date(), datetime.min.time())
-                        end = datetime.combine(end.date(), datetime.min.time()) if hasattr(end, 'date') else start + timedelta(hours=1)
-                    
-                    events.append({
-                        "apple_event_id": vevent.uid.value if vevent.uid else str(hash(str(vevent))),
-                        "summary": summary,
-                        "start": start.isoformat(),
-                        "end": end.isoformat(),
-                    })
+                vevent = event.icalendar_component
+                
+                # Summary: vText -> use .to_ical().decode() or cast to str
+                summary_raw = vevent.get("SUMMARY")
+                summary = str(summary_raw.to_ical().decode()) if summary_raw else "No title"
+                
+                # UID: vText -> string
+                uid_raw = vevent.get("UID")
+                uid = str(uid_raw.to_ical().decode()) if uid_raw else str(hash(str(vevent)))
+                
+                # DTSTART/DTEND: vDDDTypes -> .dt attribute
+                start_val = vevent.get("DTSTART")
+                end_val = vevent.get("DTEND")
+                
+                start_dt = start_val.dt if start_val else datetime.now()
+                end_dt = end_val.dt if end_val else start_dt + timedelta(hours=1)
+                
+                # Strip timezone info for consistency (store as naive UTC)
+                if hasattr(start_dt, 'tzinfo') and start_dt.tzinfo:
+                    start_dt = start_dt.replace(tzinfo=None)
+                if hasattr(end_dt, 'tzinfo') and end_dt.tzinfo:
+                    end_dt = end_dt.replace(tzinfo=None)
+                
+                events.append({
+                    "apple_event_id": uid,
+                    "summary": summary,
+                    "start": start_dt.isoformat(),
+                    "end": end_dt.isoformat(),
+                })
             except Exception as e:
                 logger.warning(f"Failed to parse event: {e}")
                 continue
