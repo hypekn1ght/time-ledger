@@ -51,16 +51,28 @@ def get_week_string(d: date) -> str:
     iso = d.isocalendar()
     return f"{iso.year}-W{iso.week:02d}"
 
+def get_week_range(week_str: str):
+    """
+    Convert YYYY-Www to (start_date, end_date) where start is the Monday of that ISO week.
+    ISO week 1 is the week containing the first Thursday of the year (or the week with Jan 4).
+    """
+    year, week = week_str.split("-W")
+    year, week = int(year), int(week)
+    jan4 = date(year, 1, 4)
+    # Monday of week 1 — jan4.weekday() gives Mon=0, so subtract to get Monday
+    monday_week1 = jan4 - timedelta(days=jan4.weekday())
+    start_of_week = monday_week1 + timedelta(weeks=week - 1)
+    end_of_week = start_of_week + timedelta(days=6)
+    return start_of_week, end_of_week
+
+
 async def get_weekly_aggregate(db: aiosqlite.Connection, week_str: str) -> dict:
     """
     Get weekly aggregate for a given ISO week string (e.g., '2026-W03').
     Returns tier breakdown with daily breakdown.
     """
     # Parse week string to date range
-    year, week = week_str.split("-W")
-    jan4 = date(int(year), 1, 4)
-    start_of_week = jan4 + timedelta(weeks=int(week) - 1, days=jan4.weekday())
-    end_of_week = start_of_week + timedelta(days=6)
+    start_of_week, end_of_week = get_week_range(week_str)
     
     cursor = await db.execute("""
         SELECT tier, SUM(total_minutes) as total_minutes, SUM(event_count) as event_count
