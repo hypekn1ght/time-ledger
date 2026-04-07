@@ -73,13 +73,27 @@ export default function Dashboard() {
 
   const grandTotalHours = Math.round(week.grand_total_minutes / 60 * 10) / 10;
 
+  // Week label: "This Week" vs "Week of Mar 31" etc
+  const isCurrentWeek = weekOffset === 0;
+  const weekLabel = isCurrentWeek ? 'This Week' : `Week of ${week.start_date}`;
+
   return (
     <div className="space-y-6">
-      {/* Hero Stats */}
+      {/* Hero Stats + Nav */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         {/* Total Hours */}
         <div className="lg:col-span-1 bg-surface border border-border rounded-lg p-5">
-          <p className="text-text-secondary text-sm font-medium mb-1">This Week</p>
+          <div className="flex items-center justify-between mb-1">
+            <p className="text-text-secondary text-sm font-medium">{weekLabel}</p>
+            {weekOffset !== 0 && (
+              <button
+                onClick={handleCurrentWeek}
+                className="text-xs px-2 py-0.5 bg-blue text-white rounded hover:bg-blue/90 transition-colors"
+              >
+                Today
+              </button>
+            )}
+          </div>
           <p className="font-mono text-4xl font-bold number-transition">
             {grandTotalHours}<span className="text-lg text-text-secondary ml-1">hrs</span>
           </p>
@@ -140,14 +154,6 @@ export default function Dashboard() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            {weekOffset !== 0 && (
-              <button
-                onClick={handleCurrentWeek}
-                className="px-3 py-1.5 text-sm bg-blue text-white rounded hover:bg-blue/90 transition-colors"
-              >
-                Current Week
-              </button>
-            )}
             <button
               onClick={handleNextWeek}
               disabled={weekOffset >= 0}
