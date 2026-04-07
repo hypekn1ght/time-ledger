@@ -15,7 +15,7 @@ async def recalculate_daily_aggregates(db: aiosqlite.Connection, start_date: dat
         SELECT 
             date(e.start, 'unixepoch', 'localtime') as day,
             c.tier,
-            SUM((julianday(e.end) - julianday(e.start)) * 1440) as total_minutes,
+            SUM((julianday(datetime(e.end, 'unixepoch', 'localtime')) - julianday(datetime(e.start, 'unixepoch', 'localtime'))) * 1440) as total_minutes,
             COUNT(*) as event_count
         FROM events e
         JOIN calendars c ON e.calendar_id = c.id
