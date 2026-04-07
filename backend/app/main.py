@@ -37,6 +37,8 @@ app.add_middleware(
         "https://frontend-cj98khh4q-hypekn1ghts-projects.vercel.app",
         "https://frontend-gyuvrlv7j-hypekn1ghts-projects.vercel.app",
         "https://frontend-obo5x20xs-hypekn1ghts-projects.vercel.app",
+        "https://dist-liard-alpha-92.vercel.app",
+        "https://dist-50lq6uftm-hypekn1ghts-projects.vercel.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
